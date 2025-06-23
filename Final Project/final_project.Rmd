@@ -1,0 +1,1016 @@
+---
+title: "final project"
+output: html_notebook
+editor_options: 
+  markdown: 
+    wrap: sentence
+---
+
+impoorting the dataset for quantitive analysis of the project
+
+```{r}
+install.packages("readxl")
+library(readxl)
+data <- read_excel("path/to/Project - Data Analysis.xlsx")
+head(data)
+colnames(data)
+```
+
+independent variables : 1.
+agree 2.
+credible 3.confidence 4.
+changing
+
+dependent: 1.group : LLM - human 2.
+scenarios
+
+Group A is informed that the differing response is from an LLM, while Group B thinks the answers are from other human participants.
+
+scenarios can be confounding variables as well but we are controlling them.
+
+changing the name of columns for easier access.
+
+```{r}
+# Load dplyr package
+library(dplyr)
+
+# Rename specific columns
+data <- data %>%
+  rename(
+    Agree = "To what extent do you agree with the reasoning behind the alternative answers? (You are asked to evaluate the reasoning, not the answer itself)",
+    Credible =  "How credible do you find the reasoning in the alternative response?",
+    Confidence = "After reviewing the alternative response, how confident are you in your original answer?",
+    Changing = "How likely would you be to change your answers if you were asked the same questions again",
+    changed_q = "How many questions would you like to change?"
+  )
+
+
+```
+
+```{r}
+# Recode the variable
+data$Answers_num <- ifelse(data$Answers == "Same answers", 1, 2)
+```
+
+plotting each independent variable among the groups
+
+```{r}
+# Load libraries
+library(ggplot2)
+library(dplyr)
+
+# Check data structure
+str(data)
+
+# Plot function for independent variables
+plot_variable <- function(data, variable_name) {
+  ggplot(data, aes(x = Group, y = .data[[variable_name]], fill = Group)) +
+    geom_boxplot() +
+    facet_wrap(~ Scenario) +
+    labs(
+      title = paste("Distribution of", variable_name, "by Group across Scenarios"),
+      x = "Group",
+      y = variable_name
+    ) +
+    theme_minimal()
+}
+
+# Create plots for each independent variable
+agree_plot <- plot_variable(data, "Agree")
+credible_plot <- plot_variable(data, "Credible")
+confidence_plot <- plot_variable(data, "Confidence")
+changing_plot <- plot_variable(data, "Changing")
+Answers_plot <- plot_variable(data, "Answers_num")
+changed_q_plot <- plot_variable(data, "changed_q")
+
+# Display plots
+agree_plot
+credible_plot
+confidence_plot
+changing_plot
+Answers_plot
+changed_q_plot
+
+
+```
+
+to check the overall effect without considering the sceanrio difference
+
+```{r}
+# Load required library
+library(ggplot2)
+
+# Function to create boxplots for variables without considering scenarios
+plot_variable_overall <- function(data, variable_name) {
+  ggplot(data, aes(x = Group, y = .data[[variable_name]], fill = Group)) +
+    geom_boxplot() +
+    labs(
+      title = paste("Overall Distribution of", variable_name, "by Group"),
+      x = "Group",
+      y = variable_name
+    ) +
+    theme_minimal()
+}
+
+# Create plots for each variable
+agree_plot <- plot_variable_overall(data, "Agree")
+credible_plot <- plot_variable_overall(data, "Credible")
+confidence_plot <- plot_variable_overall(data, "Confidence")
+changing_plot <- plot_variable_overall(data, "Changing")
+Answers_plot <- plot_variable_overall(data, "Answers_num")
+# Display plots
+agree_plot
+credible_plot
+confidence_plot
+changing_plot
+Answers_plot
+```
+
+we perform shapiro wilk test to check the normality
+
+```{r}
+# Perform Shapiro-Wilk test for each variable
+shapiro_agree <- shapiro.test(data$Agree)
+shapiro_credible <- shapiro.test(data$Credible)
+shapiro_confidence <- shapiro.test(data$Confidence)
+shapiro_changing <- shapiro.test(data$Changing)
+shapiro_Answers <- shapiro.test(data$Answers_num)
+shapiro_changed <- shapiro.test(data$changed_q)
+# Print results
+print("Shapiro-Wilk Test for Agree:")
+print(shapiro_agree)
+
+print("Shapiro-Wilk Test for Credible:")
+print(shapiro_credible)
+
+print("Shapiro-Wilk Test for Confidence:")
+print(shapiro_confidence)
+
+print("Shapiro-Wilk Test for Changing:")
+print(shapiro_changing)
+
+print("Shapiro-Wilk Test for same/different answer:")
+print(shapiro_Answers)
+
+print("Shapiro-Wilk Test for cahnged answer:")
+print(shapiro_changed)
+```
+
+all of them smaller than 0.05, so they are not normal.
+we plot the q-q plot to see the normality in the dataset
+
+```{r}
+# Load ggplot2 for visualization
+library(ggplot2)
+
+# Q-Q plot for Agree
+ggplot(data, aes(sample = Agree)) +
+  stat_qq() +
+  stat_qq_line(color = "red") +
+  labs(
+    title = "Q-Q Plot for Agree",
+    x = "Theoretical Quantiles",
+    y = "Sample Quantiles"
+  ) +
+  theme_minimal()
+
+# Q-Q plot for Credible
+ggplot(data, aes(sample = Credible)) +
+  stat_qq() +
+  stat_qq_line(color = "red") +
+  labs(
+    title = "Q-Q Plot for Credible",
+    x = "Theoretical Quantiles",
+    y = "Sample Quantiles"
+  ) +
+  theme_minimal()
+
+# Q-Q plot for Confidence
+ggplot(data, aes(sample = Confidence)) +
+  stat_qq() +
+  stat_qq_line(color = "red") +
+  labs(
+    title = "Q-Q Plot for Confidence",
+    x = "Theoretical Quantiles",
+    y = "Sample Quantiles"
+  ) +
+  theme_minimal()
+
+# Q-Q plot for Changing
+ggplot(data, aes(sample = Changing)) +
+  stat_qq() +
+  stat_qq_line(color = "red") +
+  labs(
+    title = "Q-Q Plot for Changing",
+    x = "Theoretical Quantiles",
+    y = "Sample Quantiles"
+  ) +
+  theme_minimal()
+
+# Q-Q plot for same or differnt 
+ggplot(data, aes(sample = Answers_num)) +
+  stat_qq() +
+  stat_qq_line(color = "red") +
+  labs(
+    title = "Q-Q Plot for same / differnt answers",
+    x = "Theoretical Quantiles",
+    y = "Sample Quantiles"
+  ) +
+  theme_minimal()
+
+# Q-Q plot for changed 
+ggplot(data, aes(sample = changed_q)) +
+  stat_qq() +
+  stat_qq_line(color = "red") +
+  labs(
+    title = "Q-Q Plot for changed answers",
+    x = "Theoretical Quantiles",
+    y = "Sample Quantiles"
+  ) +
+  theme_minimal()
+
+```
+
+data seem to have alot of variance.
+and its not normal.
+
+we need to perform LLM
+
+```{r}
+install.packages("lme4")
+install.packages("lmerTest")
+```
+
+for same an ddifferent answers
+
+```{r}
+library(lme4)
+library(lmerTest)
+# Fit the mixed model for Agree
+model_agree <- lmer(Agree ~ Group + (1|Participant_ID), data = data)
+model_agree_Answers  <- lmer(Agree ~ Group + (1|Participant_ID) + Answers_num, data = data)
+
+# Fit the mixed model for Credible
+model_credible <- lmer(Credible ~ Group + (1|Participant_ID), data = data)
+model_credible_Answers  <- lmer(Credible ~ Group + (1|Participant_ID) + Answers_num, data = data)
+
+# Fit the mixed model for Confidence
+model_confidence <- lmer(Confidence ~ Group + (1|Participant_ID), data = data)
+model_confidence_Answers  <- lmer(Confidence ~ Group + (1|Participant_ID) + Answers_num, data = data)
+
+# Fit the mixed model for Changing
+model_changing <- lmer(Changing ~ Group + (1|Participant_ID), data = data)
+model_changing_Answers <- lmer(Changing ~ Group + (1|Participant_ID) + Answers_num, data = data)
+
+# Fit the mixed model for Changed_q
+model_Changed_q <- lmer(changed_q ~ Group + (1|Participant_ID), data = data)
+model_Changed_q_Answers <- lmer(changed_q ~ Group + (1|Participant_ID) + Answers_num, data = data)
+
+# Display the summary of each model with p-values
+print(model_agree)
+summary(model_agree)
+print(model_agree_Answers)
+summary(model_agree_Answers)
+print(model_credible)
+summary(model_credible)
+print(model_credible_Answers)
+summary(model_credible_Answers)
+print(model_confidence)
+summary(model_confidence)
+print(model_confidence_Answers)
+summary(model_confidence_Answers)
+print(model_changing)
+summary(model_changing)
+print(model_changing_Answers)
+summary(model_changing_Answers)
+print(model_Changed_q)
+summary(model_Changed_q)
+print(model_Changed_q_Answers)
+summary(model_Changed_q_Answers)
+
+```
+
+in this LLM we wan tot investigate the effect of Group (LLLM/human ) on our four independent variables
+
+Each model follows a similar structure:
+
+Formula: The dependent variable (e.g., "Agree," "Credible," "Confidence","changing", "changed_q") is modeled as a function of fixed effects (e.g., "Group," "Answers_num") and random effects (e.g., "(1 \| Participant_ID)"). Fixed effects: These are the predictors you're interested in examining, such as "Group" (Group A vs. Group B) and "Answers_num." Random effects: These account for individual differences across participants (e.g., each participant's baseline level is different, so we model the intercept for each participant separately).
+
+The results suggest that Group did not have a significant effect on Agree scores, as evidenced by the non-significant effect of GroupB.
+The observed variability in Agree scores was mainly due to participant-level differences.
+While the Group variable still had no significant effect on Agree, the variable Answers_num (whether answers matched or differed from the original responses) had a significant negative effect.
+This suggests that the participants' agreement with the responses was strongly influenced by whether the answers aligned with their own answers.
+
+The Group variable did not have a significant effect on Credible scores, suggesting that the credibility of the responses was not affected by the group (AI vs. human).
+The Answers_num variable showed a marginally significant negative effect on Credible scores, indicating that participants rated responses less credible when the answers did not match their original responses.
+However, Group remained non-significant in influencing credibility.
+
+The Group variable did not show any significant effect on Confidence, but the intercept is highly significant, which indicates that the baseline confidence level is distinct from zero.While Group did not have a significant effect, Answers_num (whether the answers matched or differed from the original response) had a significant negative effect on Confidence.
+The higher the mismatch, the lower the confidence reported by participants.
+
+The Group variable did not have a significant effect on Changing scores, suggesting that the changes in the responses were not significantly influenced by the group (AI vs. human).
+However, there was substantial variability in participant-level scores.
+While the Group variable had no significant effect, Answers_num had a significant negative effect on Changing scores.
+Mismatched answers led to a reduction in how much the participant believed their response had changed.
+
+Group did not significantly affect the Changed_q scores, indicating that whether the group was AI or human did not influence the extent to which the responses changed.
+However, the baseline effect (Intercept) was highly significant.While Group did not have a significant effect, Answers_num had a significant negative effect on Changed_q scores.
+This implies that a mismatch in answers was associated with a reduction in the perceived change of the responses.
+
+1.  Agree \~ Group + Scenario + (1 \| Participant_ID) Group: The effect of GroupB (Group B vs. Group A) was not significant (p = 0.873), indicating no major difference in agreement scores between the two groups. Scenario: The effect of Scenario was also not significant (p = 0.142), suggesting that the different scenarios did not significantly impact the agreement scores. Conclusion: Both Group and Scenario had no significant impact on agreement, but there was substantial variation between participants as indicated by the random effects.
+2.  Agree \~ Group + Scenario + Answers_num + (1 \| Participant_ID) Group: The effect of GroupB remained non-significant (p = 0.873), with no significant difference between the two groups. Scenario: The effect of Scenario was marginally non-significant (p = 0.116), which still does not show a clear impact of the different scenarios. Answers_num: Answers_num had a significant negative effect (p = 0.0002), indicating that as the number of correct answers decreased, the agreement score decreased significantly. Conclusion: While Group and Scenario had no significant effects, Answers_num had a strong influence on agreement, with a decrease in agreement linked to a lower number of correct answers.
+3.  Credible \~ Group + Scenario + (1 \| Participant_ID) Group: The effect of GroupB was non-significant (p = 0.322), showing no significant difference between the groups in credibility ratings. Scenario: The Scenario effect was also non-significant (p = 0.178), suggesting that the scenarios did not influence the credibility scores. Conclusion: Neither Group nor Scenario showed significant effects on credibility. As with the previous models, individual differences between participants explained much of the variance.
+4.  Credible \~ Group + Scenario + Answers_num + (1 \| Participant_ID) Group: The effect of GroupB was still not significant (p = 0.3217). Scenario: The effect of Scenario was non-significant (p = 0.182), indicating that scenario differences did not have a substantial effect on credibility. Answers_num: Answers_num showed a marginally significant negative effect (p = 0.0527), suggesting that the number of correct answers may have a small but meaningful impact on credibility, with lower credibility associated with fewer correct answers. Conclusion: While Group and Scenario had no significant impact, Answers_num had a marginally significant negative effect on credibility, highlighting the importance of correct answers in shaping perceptions of credibility.
+5.  Confidence \~ Group + Scenario + (1 \| Participant_ID) Group: GroupB did not show a significant effect (p = 0.873), indicating no substantial difference in confidence between the two groups. Scenario: Scenario also did not have a significant effect (p = 0.142), suggesting that the different scenarios did not influence the confidence scores. Conclusion: Both Group and Scenario did not significantly affect confidence, with much of the variation explained by individual participant differences.
+6.  Confidence \~ Group + Scenario + Answers_num + (1 \| Participant_ID) Group: The effect of GroupB remained non-significant (p = 0.873). Scenario: The Scenario effect was again non-significant (p = 0.116). Answers_num: Answers_num showed a significant negative effect (p = 0.0002), indicating that fewer correct answers were associated with lower confidence levels. Conclusion: While Group and Scenario had no significant effects, Answers_num had a clear negative effect on confidence, reinforcing the idea that fewer correct answers led to lower confidence scores.
+7.  Changing \~ Group + Scenario + (1 \| Participant_ID) Group: The effect of GroupB was not significant (p = 0.894), showing no difference in the degree of change reported between the two groups. Scenario: Scenario also had no significant effect (p = 0.142), indicating that the scenarios did not influence how much participants felt their responses had changed. Conclusion: Neither Group nor Scenario showed significant effects on the perceived change, suggesting that individual participant characteristics or unmeasured factors may explain most of the variance.
+8.  Changing \~ Group + Scenario + Answers_num + (1 \| Participant_ID) Group: The effect of GroupB remained non-significant (p = 0.824). Scenario: Scenario had no significant effect (p = 0.116), indicating that changes in responses were not affected by the scenarios. Answers_num: Answers_num had a significant negative effect (p = 0.0002), meaning that mismatches between answers led to a decrease in the perceived change in responses. Conclusion: While Group and Scenario had no significant effects, Answers_num showed a strong negative relationship with the perceived change, highlighting that fewer correct answers led to participants perceiving less change in their responses.
+9.  Changed_q \~ Group + Scenario + (1 \| Participant_ID) Group: The effect of GroupB was not significant (p = 0.322), indicating no difference in how much participants thought their question had changed between the two groups. Scenario: Scenario did not have a significant effect (p = 0.178), suggesting that the different scenarios did not impact how much the participants thought their question had changed. Conclusion: Group and Scenario did not significantly influence the perception of change in the question, indicating that individual participant differences were more important.
+10. Changed_q \~ Group + Scenario + Answers_num + (1 \| Participant_ID) Group: The effect of GroupB was still non-significant (p = 0.3217). Scenario: Scenario had a marginal effect (p = 0.182), but it was not significant. Answers_num: Answers_num showed a marginally significant negative effect (p = 0.0527), indicating that participants with fewer correct answers were more likely to believe their question had changed less. Conclusion: While Group and Scenario did not have significant effects, Answers_num had a marginally significant negative effect on the perception of question change, reinforcing the idea that fewer correct answers were associated with a less perceived change in the question. Overall Conclusion: Across all models, Answers_num emerged as the most consistent and significant predictor, with a negative relationship to Agree, Credible, Confidence, Changing, and Changed_q. This suggests that the number of correct answers participants provided had a strong impact on their perceptions of agreement, credibility, confidence, and change, with fewer correct answers generally leading to lower scores in these areas. Group and Scenario had limited or no significant effects, suggesting that the variations in responses were largely driven by individual-level factors (such as the number of correct answers) rather than group membership or scenario differences.
+
+plotting the results
+
+```{r}
+library(lme4)
+library(lmerTest)
+library(ggplot2)
+
+# Fit the mixed models (as you already have)
+model_agree <- lmer(Agree ~ Group + (1|Participant_ID), data = data)
+model_agree_Answers  <- lmer(Agree ~ Group + (1|Participant_ID) + Answers_num, data = data)
+
+model_credible <- lmer(Credible ~ Group + (1|Participant_ID), data = data)
+model_credible_Answers  <- lmer(Credible ~ Group + (1|Participant_ID) + Answers_num, data = data)
+
+model_confidence <- lmer(Confidence ~ Group + (1|Participant_ID), data = data)
+model_confidence_Answers  <- lmer(Confidence ~ Group + (1|Participant_ID) + Answers_num, data = data)
+
+model_changing <- lmer(Changing ~ Group + (1|Participant_ID), data = data)
+model_changing_Answers <- lmer(Changing ~ Group + (1|Participant_ID) + Answers_num, data = data)
+
+model_Changed_q <- lmer(changed_q ~ Group + (1|Participant_ID), data = data)
+model_Changed_q_Answers <- lmer(changed_q ~ Group + (1|Participant_ID) + Answers_num, data = data)
+
+
+# Create boxplots for each response variable by Group
+# For example: `Agree`
+ggplot(data, aes(x = Group, y = Agree, fill = Group)) +
+  geom_boxplot() +
+  theme_minimal() +
+  labs(title = "Boxplot of Agree Scores by Group", x = "Group", y = "Agree") +
+  theme(legend.position = "none")
+
+# Repeat the boxplot creation for each of the response variables
+
+# Boxplot for Credible
+ggplot(data, aes(x = Group, y = Credible, fill = Group)) +
+  geom_boxplot() +
+  theme_minimal() +
+  labs(title = "Boxplot of Credible Scores by Group", x = "Group", y = "Credible") +
+  theme(legend.position = "none")
+
+# Boxplot for Confidence
+ggplot(data, aes(x = Group, y = Confidence, fill = Group)) +
+  geom_boxplot() +
+  theme_minimal() +
+  labs(title = "Boxplot of Confidence Scores by Group", x = "Group", y = "Confidence") +
+  theme(legend.position = "none")
+
+# Boxplot for Changing
+ggplot(data, aes(x = Group, y = Changing, fill = Group)) +
+  geom_boxplot() +
+  theme_minimal() +
+  labs(title = "Boxplot of Changing Scores by Group", x = "Group", y = "Changing") +
+  theme(legend.position = "none")
+
+# Boxplot for Changed_q
+ggplot(data, aes(x = Group, y = changed_q, fill = Group)) +
+  geom_boxplot() +
+  theme_minimal() +
+  labs(title = "Boxplot of Changed_q Scores by Group", x = "Group", y = "Changed_q") +
+  theme(legend.position = "none")
+
+```
+
+we have a doubt that scenario type can make some changes :
+
+```{r}
+# Linear mixed model with Scenario as a fixed effect
+library(lme4)
+library(lmerTest)
+# Model for Agree with Scenario as a fixed effect
+model_agree <- lmer(Agree ~ Group + Scenario + (1 | Participant_ID), data = data)
+summary(model_agree)
+model_agree_Answers <- lmer(Agree ~ Group + Scenario + Answers_num + (1 | Participant_ID), data = data)
+summary(model_agree_Answers)
+# Model for Credible with Scenario as a fixed effect
+model_credible <- lmer(Credible ~ Group + Scenario + (1 | Participant_ID), data = data)
+summary(model_credible)
+model_credible_Answers <- lmer(Credible ~ Group + Scenario + Answers_num + (1 | Participant_ID), data = data)
+summary(model_credible_Answers)
+# Model for Confidence with Scenario as a fixed effect
+model_confidence <- lmer(Confidence ~ Group + Scenario + (1 | Participant_ID), data = data)
+summary(model_confidence)
+model_confidence_Answers <- lmer(Confidence ~ Group + Scenario + Answers_num + (1 | Participant_ID), data = data)
+summary(model_confidence_Answers)
+# Model for Changing with Scenario as a fixed effect
+model_changing <- lmer(Changing ~ Group + Scenario + (1 | Participant_ID), data = data)
+summary(model_changing)
+model_changing_Answers <- lmer(Changing ~ Group + Scenario + Answers_num + (1 | Participant_ID), data = data)
+summary(model_changing_Answers)
+# Model for Changed with Scenario as a fixed effect
+model_changed_q <- lmer(changed_q ~ Group + Scenario + (1 | Participant_ID), data = data)
+summary(model_changed_q)
+model_changed_q_Answers <- lmer(changed_q ~ Group + Scenario + Answers_num + (1 | Participant_ID), data = data)
+summary(model_changed_q_Answers)
+```
+
+This analysis investigates the potential effect of Scenario (along with Group as a fixed effect) on four dependent variables
+
+Agree: The fixed effect of Scenario has an estimate of -0.17647 with a p-value of 0.118 (not significant at the 0.05 level).
+This suggests that Scenario does not significantly affect the Agree scores.
+The Group variable (with GroupB for LLM vs. Human) also did not show a significant effect, with a coefficient of 0.05556 and a p-value of 0.162.
+The random effect due to Participant_ID has a variance of 0.2014, and the residual variance is 1.1871, indicating that individual differences contribute relatively less to the variation in Agree.
+
+Credible: For Credible, the estimate for Scenario is -0.1647, with a p-value of 0.172, indicating no significant effect of Scenario on Credible.
+The Group variable also did not show a significant effect on Credible with a coefficient of 0.3611 and a p-value of 0.025, suggesting a weak effect, though not statistically significant.
+The random effect for Participant_ID had a variance of 0.2175, while the residual variance was 1.2339.
+
+Confidence: In the Confidence model, the Scenario effect is estimated to be 0.11765, with a p-value of 0.171.
+This suggests that Scenario does not significantly affect Confidence at the 0.05 significance level.
+The Group effect showed a negative coefficient of -0.4618, but it was not significant (p-value = 0.169).
+The Participant_ID random effect variance is 0.3618, while the residual variance is 0.4765.
+
+Changing: The effect of Scenario on Changing is estimated to be -0.01765, with a p-value of 0.862, indicating no significant effect.
+The Group effect had a coefficient of 0.18056, but it also did not show significance (p-value = 0.802).
+The variance for Participant_ID in this model is 0.0037, while the residual variance is 0.8445.
+
+findings: Scenario does not significantly influence the outcomes measured (Agree, Credible, Confidence, Changing).
+
+1\.
+Model for Agree (with and without Answers_num)
+
+The first set of models examines Agree, which is the dependent variable.
+In the first model, with Group and Scenario as fixed effects, the Intercept (baseline value for the "Group A") is highly significant with a p-value of $1.75 \times 10^{-12}$, suggesting strong support for the intercept value.
+However, the GroupB effect is not significant ($p = 0.873$), indicating that the difference between Group A and Group B does not significantly affect agreement.
+The Scenario effect is also not significant ($p = 0.142$), suggesting that different scenarios do not significantly impact agreement levels.
+
+In the second model, which includes Answers_num as a fixed effect, Answers_num has a highly significant negative estimate ($-0.93144$, $p = 0.000198$), indicating that higher numbers of answers are associated with lower agreement scores.
+The effect of Scenario remains non-significant ($p = 0.116$).
+
+2\.
+Model for Credible (with and without Answers_num)
+
+The second set of models focuses on Credible.
+In the first model (without Answers_num), the Intercept is significant ($p = 8.91 \times 10^{-12}$), while the GroupB effect is not significant ($p = 0.322$), again suggesting no substantial difference between the two groups.
+Similarly, Scenario has a non-significant effect ($p = 0.178$), indicating that the scenario does not significantly influence the credibility scores.
+
+In the second model, which includes Answers_num, Answers_num is highly significant ($p = 0.000198$), indicating that as the number of answers increases, the credibility scores decrease.
+The Scenario effect remains non-significant ($p = 0.178$).
+
+3\.
+Model for Confidence (with and without Answers_num)
+
+For Confidence, the first model shows that GroupB has no significant effect ($p = 0.823$), while the Scenario effect is not significant ($p = 0.323$), suggesting that neither the group membership nor the scenario type significantly influence confidence levels.
+The Intercept is significant with a $p$-value of $1.73 \times 10^{-11}$.
+
+In the second model, adding Answers_num reveals that it does not have a significant effect on Confidence ($p = 0.087$), and both GroupB and Scenario still show no significant impact on confidence scores.
+
+4\.
+Model for Changing (with and without Answers_num)
+
+For Changing, the first model shows that both GroupB ($p = 0.937$) and Scenario ($p = 0.256$) have no significant effects, indicating that changes in the scenario and group membership do not significantly affect the "Changing" variable.
+The Intercept is again significant ($p = 7.29 \times 10^{-11}$).
+
+The second model, which includes Answers_num, shows a similar lack of significance for both GroupB and Scenario ($p = 0.156$ and $p = 0.296$, respectively), with Answers_num showing a non-significant effect ($p = 0.298$) on Changing.
+
+5\.
+Model for Changed (with and without Answers_num)
+
+Finally, for Changed, in the first model, both GroupB ($p = 0.871$) and Scenario ($p = 0.178$) show no significant effect, implying that changes in the scenario and group membership do not significantly influence whether the situation has changed.
+The Intercept remains significant with a p-value of $3.44 \times 10^{-11}$.
+
+When Answers_num is added in the second model, Answers_num has a weakly significant effect ($p = 0.0527$), suggesting a trend toward lower scores for those with higher answers numbers, but GroupB and Scenario remain non-significant.
+
+plotting the result :
+
+```{r}
+# Load necessary libraries
+library(ggplot2)
+library(dplyr)
+
+# Predict the fixed effects for each model
+data$predict_agree <- predict(model_agree, re.form = NA)  # No random effect
+data$predict_credible <- predict(model_credible, re.form = NA)
+data$predict_confidence <- predict(model_confidence, re.form = NA)
+data$predict_changing <- predict(model_changing, re.form = NA)
+data$predict_changed <- predict(model_changed_q, re.form = NA)
+
+data$predict_agree_Answers <- predict(model_agree_Answers, re.form = NA)  # No random effect
+data$predict_credible_Answers <- predict(model_credible_Answers, re.form = NA)
+data$predict_confidence_Answers <- predict(model_confidence_Answers, re.form = NA)
+data$predict_changing_Answers <- predict(model_changing_Answers, re.form = NA)
+data$predict_changed_Answers <- predict(model_changed_q, re.form = NA)
+
+
+# Plotting Agree
+ggplot(data, aes(x = Scenario, y = Agree, color = Group)) +
+  geom_point() +
+  geom_smooth(method = "lm", aes(y = predict_agree), se = FALSE) +
+  labs(title = "Effect of Scenario on Agree", x = "Scenario", y = "Agree") +
+  theme_minimal()
+
+# Plotting Credible
+ggplot(data, aes(x = Scenario, y = Credible, color = Group)) +
+  geom_point() +
+  geom_smooth(method = "lm", aes(y = predict_credible), se = FALSE) +
+  labs(title = "Effect of Scenario on Credible", x = "Scenario", y = "Credible") +
+  theme_minimal()
+
+# Plotting Confidence
+ggplot(data, aes(x = Scenario, y = Confidence, color = Group)) +
+  geom_point() +
+  geom_smooth(method = "lm", aes(y = predict_confidence), se = FALSE) +
+  labs(title = "Effect of Scenario on Confidence", x = "Scenario", y = "Confidence") +
+  theme_minimal()
+
+# Plotting Changing
+ggplot(data, aes(x = Scenario, y = Changing, color = Group)) +
+  geom_point() +
+  geom_smooth(method = "lm", aes(y = predict_changing), se = FALSE) +
+  labs(title = "Effect of Scenario on Changing", x = "Scenario", y = "Changing") +
+  theme_minimal()
+
+# Plotting changed
+ggplot(data, aes(x = Scenario, y = changed_q, color = Group)) +
+  geom_point() +
+  geom_smooth(method = "lm", aes(y = predict_changed), se = FALSE) +
+  labs(title = "Effect of Scenario on Changed", x = "Scenario", y = "Changed") +
+  theme_minimal()
+
+# Plotting Agree
+ggplot(data, aes(x = Scenario, y = Agree, color = Group)) +
+  geom_point() +
+  geom_smooth(method = "lm", aes(y = predict_agree_Answers ), se = FALSE) +
+  labs(title = "Effect of Scenario same different on Agree", x = "Scenario", y = "Agree") +
+  theme_minimal()
+
+# Plotting Credible
+ggplot(data, aes(x = Scenario, y = Credible, color = Group)) +
+  geom_point() +
+  geom_smooth(method = "lm", aes(y = predict_credible_Answers ), se = FALSE) +
+  labs(title = "Effect of Scenario same different on Credible", x = "Scenario", y = "Credible") +
+  theme_minimal()
+
+# Plotting Confidence
+ggplot(data, aes(x = Scenario, y = Confidence, color = Group)) +
+  geom_point() +
+  geom_smooth(method = "lm", aes(y = predict_confidence_Answers ), se = FALSE) +
+  labs(title = "Effect of Scenario same different on Confidence", x = "Scenario", y = "Confidence") +
+  theme_minimal()
+
+# Plotting Changing
+ggplot(data, aes(x = Scenario, y = Changing, color = Group)) +
+  geom_point() +
+  geom_smooth(method = "lm", aes(y = predict_changing_Answers ), se = FALSE) +
+  labs(title = "Effect of Scenario same different on Changing", x = "Scenario", y = "Changing") +
+  theme_minimal()
+
+# Plotting Changed
+ggplot(data, aes(x = Scenario, y = changed_q, color = Group)) +
+  geom_point() +
+  geom_smooth(method = "lm", aes(y = predict_changed_Answers ), se = FALSE) +
+  labs(title = "Effect of Scenario same different on Changed", x = "Scenario", y = "Changed") +
+  theme_minimal()
+```
+
+have to investigate their interaction as well :
+
+```{r}
+library(lme4)
+library(lmerTest)
+# Linear mixed model with interaction between Group and Scenario
+model_interaction <- lmer(Agree ~ Group * Scenario + (1 | Participant_ID), data = data)
+summary(model_interaction)
+model_interaction_Answers <- lmer(Agree ~ Group * Scenario *Answers_num + (1 | Participant_ID), data = data)
+summary(model_interaction_Answers)
+# Model for Credible with interaction between Group and Scenario
+model_credible <- lmer(Credible ~ Group * Scenario + (1 | Participant_ID), data = data)
+summary(model_credible)
+model_credible_Answers <- lmer(Credible ~ Group * Scenario *Answers_num + (1 | Participant_ID), data = data)
+summary(model_credible_Answers)
+# Model for Confidence with interaction between Group and Scenario
+model_confidence <- lmer(Confidence ~ Group * Scenario + (1 | Participant_ID), data = data)
+summary(model_confidence)
+model_confidence_Answers <- lmer(Confidence ~ Group * Scenario *Answers_num + (1 | Participant_ID), data = data)
+summary(model_confidence_Answers)
+# Model for Changing with interaction between Group and Scenario
+model_changing <- lmer(Changing ~ Group * Scenario + (1 | Participant_ID), data = data)
+summary(model_changing)
+model_changing_Answers <- lmer(Changing ~ Group * Scenario *Answers_num + (1 | Participant_ID), data = data)
+summary(model_changing_Answers)
+# Model for Changed with interaction between Group and Scenario
+model_changed <- lmer(changed_q ~ Group * Scenario + (1 | Participant_ID), data = data)
+summary(model_changed)
+model_changed_Answers <- lmer(changed_q ~ Group * Scenario *Answers_num + (1 | Participant_ID), data = data)
+summary(model_changed_Answers)
+```
+
+1\.
+Model for Agree (with and without Answers_num)
+
+The first model for Agree included Group and Scenario as fixed effects, along with a random intercept for each participant.
+The Intercept was highly significant ($p < 0.001$), indicating that the baseline value for "Group A" is robust.
+However, neither the GroupB effect nor the Scenario effect was significant ($p = 0.658$ and $p = 0.141$, respectively), suggesting that neither group membership nor scenario type has a substantial impact on agreement levels.
+
+The second model, which included Answers_num as a fixed effect, revealed that Answers_num was not statistically significant ($p = 0.538$), indicating that the number of answers does not significantly affect agreement.
+Additionally, the interaction terms between Group and Scenario showed no significant impact, reinforcing the lack of effects for these predictors.
+
+2\.
+Model for Credible (with and without Answers_num)
+
+For Credible, the first model (without Answers_num) showed a significant Intercept ($p < 0.001$), but the fixed effects of GroupB and Scenario were not significant ($p = 0.322$ and $p = 0.178$, respectively).
+This suggests that group membership and scenario type do not have a substantial effect on credibility ratings.
+
+The second model, which included Answers_num, showed that Answers_num had no significant effect on Credible ($p = 0.539$), reinforcing the previous finding that the number of answers does not impact credibility.
+The other fixed effects remained non-significant, further suggesting no substantial influence from GroupB and Scenario.
+
+3\.
+Model for Confidence (with and without Answers_num)
+
+The first model for Confidence indicated that neither GroupB nor Scenario had a significant effect ($p = 0.823$ and $p = 0.323$, respectively), while the Intercept was significant ($p < 0.001$).
+This suggests that confidence levels were not influenced by group membership or scenario type.
+
+The second model, which included Answers_num, showed that Answers_num was not a significant predictor of Confidence ($p = 0.087$), further supporting the conclusion that neither the group nor the scenario significantly affected confidence levels.
+
+4\.
+Model for Changing (with and without Answers_num)
+
+In the first model for Changing, neither GroupB ($p = 0.937$) nor Scenario ($p = 0.256$) had a significant effect, and the Intercept was significant ($p < 0.001$), indicating that neither group nor scenario influenced changes in this variable.
+
+The second model, which included Answers_num, showed similar results, with GroupB ($p = 0.156$) and Scenario ($p = 0.296$) still having no significant effect.
+The inclusion of Answers_num also did not yield significant results ($p = 0.298$), reinforcing the finding that these factors do not significantly affect Changing.
+
+5\.
+Model for Changed (with and without Answers_num)
+
+For Changed, the first model revealed that neither GroupB ($p = 0.871$) nor Scenario ($p = 0.178$) were significant predictors, suggesting that changes in the scenario and group membership did not significantly influence whether the answer had changed.
+The Intercept remained significant ($p < 0.001$).
+
+In the second model, when Answers_num was added, the effect of Answers_num was weakly significant ($p = 0.0527$), suggesting a trend toward lower scores for those with different answer .
+However, GroupB and Scenario remained non-significant.
+
+plottin the result:
+
+```{r}
+install.packages("effects")
+```
+
+for plotting the result we had to use chatgpt as we didint know how to plot them
+
+```{r}
+library(effects)
+
+# Get the interaction effect using the 'effect' package
+effect_agree <- effect("Group*Scenario", model_interaction)
+effect_agree_Answers <- effect("Group*Scenario*Answers_num", model_interaction_Answers)
+# Plot the interaction effect
+plot(effect_agree, main = "Interaction between Group and Scenario on Agree")
+plot(effect_agree_Answers, main = "Interaction between Group and Scenario on Agree in same differnt ")
+
+effect_credible <- effect("Group*Scenario", model_credible)
+plot(effect_credible, main = "Interaction between Group and Scenario on Credible")
+effect_credible_Answers <- effect("Group*Scenario*Answers_num", model_credible_Answers)
+plot(effect_credible_Answers, main = "Interaction between Group and Scenario on Credible in same differnt ")
+
+effect_confidence <- effect("Group*Scenario", model_confidence)
+plot(effect_confidence, main = "Interaction between Group and Scenario on Confidence")
+effect_confidence_Answers <- effect("Group*Scenario*Answers_num", model_confidence_Answers)
+plot(effect_confidence_Answers, main = "Interaction between Group and Scenario on Confidence in same differnt ")
+
+effect_changing <- effect("Group*Scenario", model_changing)
+plot(effect_changing, main = "Interaction between Group and Scenario on Changing")
+effect_changing_Answers <- effect("Group*Scenario*Answers_num", model_changing_Answers)
+plot(effect_changing_Answers, main = "Interaction between Group and Scenario on Changing in same differnt ")
+
+effect_changed <- effect("Group*Scenario", model_changing)
+plot(effect_changed, main = "Interaction between Group and Scenario on Changed")
+effect_changed_Answers <- effect("Group*Scenario*Answers_num", model_changed_Answers)
+plot(effect_changed_Answers, main = "Interaction between Group and Scenario on Changed in same differnt ")
+```
+
+for checking the realtions with a post hoc test for LMM we use emmeans package post hoc test
+
+```{r}
+install.packages("emmeans") # Install emmeans if not already installed
+library(emmeans)            # Load the emmeans package
+
+```
+
+```{r}
+# Agree model post hoc tests
+emmeans_agree <- emmeans(model_interaction, ~ Group * Scenario)
+posthoc_agree <- pairs(emmeans_agree, adjust = "bonferroni")
+print(posthoc_agree)
+
+emmeans_agree_answers <- emmeans(model_agree_Answers, ~ Group * Scenario * Answers_num)
+posthoc_agree_answers <- pairs(emmeans_agree_answers, adjust = "bonferroni")
+print(posthoc_agree_answers)
+
+# Credible model post hoc tests
+emmeans_credible <- emmeans(model_credible, ~ Group * Scenario)
+posthoc_credible <- pairs(emmeans_credible, adjust = "bonferroni")
+print(posthoc_credible)
+
+emmeans_credible_answers <- emmeans(model_credible_Answers, ~ Group * Scenario * Answers_num)
+posthoc_credible_answers <- pairs(emmeans_credible_answers, adjust = "bonferroni")
+print(posthoc_credible_answers)
+
+# Confidence model post hoc tests
+emmeans_confidence <- emmeans(model_confidence, ~ Group * Scenario)
+posthoc_confidence <- pairs(emmeans_confidence, adjust = "bonferroni")
+print(posthoc_confidence)
+
+emmeans_confidence_answers <- emmeans(model_confidence_Answers, ~ Group * Scenario * Answers_num)
+posthoc_confidence_answers <- pairs(emmeans_confidence_answers, adjust = "bonferroni")
+print(posthoc_confidence_answers)
+
+# Changing model post hoc tests
+emmeans_changing <- emmeans(model_changing, ~ Group * Scenario)
+posthoc_changing <- pairs(emmeans_changing, adjust = "bonferroni")
+print(posthoc_changing)
+
+emmeans_changing_answers <- emmeans(model_changing_Answers, ~ Group * Scenario * Answers_num)
+posthoc_changing_answers <- pairs(emmeans_changing_answers, adjust = "bonferroni")
+print(posthoc_changing_answers)
+
+# Changing model post hoc tests
+emmeans_changed <- emmeans(model_changed_Answers, ~ Group * Scenario)
+posthoc_changed <- pairs(emmeans_changed, adjust = "bonferroni")
+print(posthoc_changing)
+
+emmeans_changed_answers <- emmeans(model_changed_Answers, ~ Group * Scenario * Answers_num)
+posthoc_changed_answers <- pairs(emmeans_changed_answers, adjust = "bonferroni")
+print(posthoc_changed_answers)
+
+```
+
+Group A vs. Group B (Overall Scenario 2.5): First Table: The difference (estimate) between Group A and Group B for Scenario 2.5 is very small (-0.056) and not statistically significant (p.value = 0.8735).
+Across all scenarios, the differences between groups are minor and consistently non-significant (p \> 0.05).
+Interaction with Answers_num (Same/Different): The interaction effect considers whether the response type (Same = 1 or Different = 2) influences the differences between groups: Some contrasts, like A Scenario2.5 Answers_num1 vs. A Scenario2.5 Answers_num2, show larger differences (e.g., estimate = 0.931 with p = 0.0012 in the first table), indicating a significant interaction effect.
+However, most other contrasts involving both groups and answer types have non-significant results (p \> 0.05), suggesting these differences are not robust.
+Bonferroni Adjustment: Multiple comparisons were corrected with Bonferroni, making it harder to detect significance.
+Even with significant raw results, the adjusted p-values often exceed 0.05.
+Consistency Across Models: Differences between groups (A vs. B) and within groups based on answers (Same/Different) are generally small and not statistically meaningful.
+Significant contrasts, where present, are specific to certain scenarios or interactions (e.g., Same vs. Different within Group A).
+
+plotting the responses: used chatgpt cause i dunno how to plot this (has to modify)
+
+```{r}
+# Load necessary library
+library(ggplot2)
+
+# Extract the marginal means for Group, Scenario, and Answers_num
+emmeans_results <- as.data.frame(emmeans(model_interaction_Answers, ~ Group * Scenario * Answers_num))
+
+# Create a plot
+ggplot(emmeans_results, aes(x = Scenario, y = emmean, fill = as.factor(Answers_num))) +
+  geom_bar(stat = "identity", position = "dodge") +  # Bar plot with dodged bars for different Answers_num
+  geom_errorbar(aes(ymin = emmean - SE, ymax = emmean + SE), 
+                width = 0.2, position = position_dodge(0.9)) +  # Add error bars
+  facet_wrap(~ Group) +  # Separate plots for each group
+  labs(
+    title = "Interaction of Group, Scenario, and Answers (Same/Different)",
+    x = "Scenario",
+    y = "Mean Response",
+    fill = "Answers Type (1 = Same, 2 = Different)"
+  ) +
+  theme_minimal()
+
+
+
+```
+
+we can see the relation of our participant demographic with our results (their perception )
+
+```{r}
+library(readxl)
+data2 <- read_excel("path/to/Pre-study survey (Responses).xlsx")
+head(data2)
+colnames(data2)
+head(data)
+```
+
+merging two dataset :
+
+```{r}
+
+data_merged <- merge(data, data2, by.x = "Participant_ID", by.y = "participant", all.x = TRUE)
+
+# Check the merged dataset
+head(data_merged)
+colnames(data_merged)
+```
+
+```{r}
+# Load dplyr package
+library(dplyr)
+
+# Rename specific columns
+data_merged <- data_merged %>%
+  rename(
+    Age = "What is your age?",
+    gender = "What is your gender identity?",
+    Education_Level = "What is you highest educational level?",
+    employement = "What is your employement status?"
+  )
+
+head(data_merged)
+colnames(data_merged)
+```
+
+```{r}
+# Convert categorical variables to factors
+data_merged$Education_Level <- factor(data_merged$Education_Level,
+                                      levels = c("Doctoral degree or higher", "Master's degree", "Bachelor's degree"))
+
+data_merged$Age <- factor(data_merged$Age,
+                          levels = c("18-24", "25-34", "35-44", "45-54", "55-64"))
+
+data_merged$Gender <- factor(data_merged$gender,
+                             levels = c("Male", "Non-binary/non-conforming", "Female"))
+
+data_merged$Occupation <- factor(data_merged$employement,
+                                 levels = c("Student", "Unemployed", "Employed full-time", "Female"))
+
+```
+
+```{r}
+install.packages("gridExtra")
+```
+
+plotting the distribution :
+
+```{r}
+ggplot(data_merged, aes(x = Age, y = Agree, fill = Age)) +
+  geom_boxplot() +
+  labs(title = "Boxplot of 'Agree' by Age Group", x = "Age Group", y = "Agree Score") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+ggplot(data_merged, aes(x = Education_Level, y = Agree, fill = Education_Level)) +
+  geom_boxplot() +
+  labs(title = "Boxplot of 'Agree' by Education Level", x = "Education Level", y = "Agree Score") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+ggplot(data_merged, aes(x = Gender, y = Agree, fill = Gender)) +
+  geom_boxplot() +
+  labs(title = "Boxplot of 'Agree' by Gender", x = "Gender", y = "Agree Score") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+ggplot(data_merged, aes(x = Occupation, y = Agree, fill = Occupation)) +
+  geom_boxplot() +
+  labs(title = "Boxplot of 'Agree' by Occupation", x = "Occupation", y = "Agree Score") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+```
+
+fitting the LMM :
+
+```{r}
+library(lme4)
+
+# Linear Mixed Model with Age, Education Level, Gender, and Occupation as covariates
+model_agree <- lmer(Agree ~ Group + Scenario + Age + Education_Level + gender + employement + (1 | Participant_ID), data = data_merged)
+
+# Display model summary
+summary(model_agree)
+
+```
+
+Age: The age group 55-64 has a significant positive effect on Agree scores.
+
+Education Level: Participants with a Master's degree have a significantly lower Agree score, but this is marginally significant.
+
+Group: Group B participants show a positive difference, but it is not statistically significant.
+
+Other factors such as Gender and Employment do not have significant effects on Agree scores, as indicated by their t-values.
+
+```{r}
+# Linear Mixed Model with Age, Education Level, Gender, and Occupation as covariates
+model_Credible <- lm(Credible ~ Group + Scenario + Age + Education_Level + gender + employement, data = data_merged)
+
+# Display model summary
+summary(model_Credible)
+```
+
+Age and Education Level are significant predictors of the Credible score, with participants in the 55-64 age group and those with lower education levels finding alternative answers more credible.
+
+Group and Scenario do not have significant effects, suggesting that these factors might not be as impactful in explaining variations in the Credible score.
+
+Gender and Employment have no significant effects on Credible, indicating that these variables do not play a large role in explaining the variation in the Credible scores in this dataset.
+
+for the errors checking to see the random effect is necessary :
+
+```{r}
+model_fixed <- lm(Credible ~ Group + Scenario + Age + Education_Level + gender + employement, data = data_merged)
+model_random <- lmer(Credible ~ Group + Scenario + Age + Education_Level + gender + employement + (1 | Participant_ID), data = data_merged)
+
+# Compare models using AIC
+AIC(model_fixed, model_random)
+
+```
+
+fixed model performs better!
+
+```{r}
+# Linear Mixed Model with Age, Education Level, Gender, and Occupation as covariates
+model_Confidence <- lm(Confidence ~ Group + Scenario + Age + Education_Level + gender + employement, data = data_merged)
+
+# Display model summary
+summary(model_Confidence)
+```
+
+Significant predictors for Confidence include GroupB, certain age groups (25-34 and 35-44), and gender Non-binary/non-conforming.
+
+Non-significant predictors include Scenario, Education_Level, and employment status.
+
+The model explains around 47.86% of the variance in confidence, which is reasonable but suggests there may be other factors influencing confidence that were not included in the model.
+
+```{r}
+# Linear Mixed Model with Age, Education Level, Gender, and Occupation as covariates
+model_Changing <- lm(Changing ~ Group + Scenario + Age + Education_Level + gender + employement, data = data_merged)
+
+# Display model summary
+summary(model_Changing)
+```
+
+The only significant predictor is Age55-64, suggesting that individuals in this age group tend to report a greater change in the outcome variable (Changing).
+Gender has a marginal effect, with males tending to report a higher change than females, but this effect is only marginally significant.
+Most other predictors, including Group, Scenario, Education_Level, and employment status, do not show any statistically significant effects on the Changing variable.
+
+plotting the results :
+
+```{r}
+ggplot(data_merged, aes(x = Age, y = Agree)) +
+  geom_boxplot() +
+  labs(title = "Boxplot of Agree by Age", x = "Age", y = "Agree")
+ggplot(data_merged, aes(x = Age, y = Credible)) +
+  geom_boxplot() +
+  labs(title = "Boxplot of Credible by Age", x = "Age", y = "Credible")
+ggplot(data_merged, aes(x = Age, y = Confidence)) +
+  geom_boxplot() +
+  labs(title = "Boxplot of Confidence by Age", x = "Age", y = "Confidence")
+ggplot(data_merged, aes(x = Age, y = Changing)) +
+  geom_boxplot() +
+  labs(title = "Boxplot of Changing by Age", x = "Age", y = "Changing")
+
+```
+
+```{r}
+ggplot(data_merged, aes(x = Education_Level, y = Agree)) +
+  geom_boxplot() +
+  labs(title = "Boxplot of Agree by Education_Level", x = "Education_Level", y = "Agree")
+ggplot(data_merged, aes(x = Education_Level, y = Credible)) +
+  geom_boxplot() +
+  labs(title = "Boxplot of Credible by Education_Level", x = "Education_Level", y = "Credible")
+ggplot(data_merged, aes(x = Education_Level, y = Confidence)) +
+  geom_boxplot() +
+  labs(title = "Boxplot of Confidence by Education_Level", x = "Education_Level", y = "Confidence")
+ggplot(data_merged, aes(x = Education_Level, y = Changing)) +
+  geom_boxplot() +
+  labs(title = "Boxplot of Changing by Education_Level", x = "Education_Level", y = "Changing")
+```
+
+```{r}
+ggplot(data_merged, aes(x = gender, y = Agree)) +
+  geom_boxplot() +
+  labs(title = "Boxplot of Agree by gender", x = "gender", y = "Agree")
+ggplot(data_merged, aes(x = gender, y = Credible)) +
+  geom_boxplot() +
+  labs(title = "Boxplot of Credible by gender", x = "gender", y = "Credible")
+ggplot(data_merged, aes(x = gender, y = Confidence)) +
+  geom_boxplot() +
+  labs(title = "Boxplot of Confidence by gender", x = "gender", y = "Confidence")
+ggplot(data_merged, aes(x = gender, y = Changing)) +
+  geom_boxplot() +
+  labs(title = "Boxplot of Changing by gender", x = "gender", y = "Changing")
+```
+
+```{r}
+ggplot(data_merged, aes(x = employement, y = Agree)) +
+  geom_boxplot() +
+  labs(title = "Boxplot of Agree by employement", x = "employement", y = "Agree")
+ggplot(data_merged, aes(x = employement, y = Credible)) +
+  geom_boxplot() +
+  labs(title = "Boxplot of Credible by employement", x = "employement", y = "Credible")
+ggplot(data_merged, aes(x = employement, y = Confidence)) +
+  geom_boxplot() +
+  labs(title = "Boxplot of Confidence by employement", x = "employement", y = "Confidence")
+ggplot(data_merged, aes(x = employement, y = Changing)) +
+  geom_boxplot() +
+  labs(title = "Boxplot of Changing by employement", x = "employement", y = "Changing")
+```
